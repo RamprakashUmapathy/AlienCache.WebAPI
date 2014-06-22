@@ -10,6 +10,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Properties", "Properties", 
 		..\Documents\Properties\SharedAssemblyInfo.cs = ..\Documents\Properties\SharedAssemblyInfo.cs
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlienCache.WebApi.Tests", "AlienCache.WebApi.Tests\AlienCache.WebApi.Tests.csproj", "{ECBB4E43-502C-499D-BD33-88D8B6DCCEA6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{9FB3C9A8-00A3-4A88-AFD9-737D0B2A542B}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\packages.config = .nuget\packages.config
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +27,10 @@ Global
 		{1BC66503-9671-4F4C-B4B7-5C72DC9C2AC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1BC66503-9671-4F4C-B4B7-5C72DC9C2AC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1BC66503-9671-4F4C-B4B7-5C72DC9C2AC6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ECBB4E43-502C-499D-BD33-88D8B6DCCEA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECBB4E43-502C-499D-BD33-88D8B6DCCEA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECBB4E43-502C-499D-BD33-88D8B6DCCEA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECBB4E43-502C-499D-BD33-88D8B6DCCEA6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
