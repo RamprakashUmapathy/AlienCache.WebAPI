@@ -13,7 +13,7 @@ namespace Aliencube.AlienCache.WebApi
     /// <summary>
     /// This represents the cach entity for Web API.
     /// </summary>
-    public class WebApiCache : ActionFilterAttribute
+    public class WebApiCacheAttribute : ActionFilterAttribute
     {
         private const string RESPONSE_CONTENT_TYPE = "responseContentType";
 
@@ -31,7 +31,7 @@ namespace Aliencube.AlienCache.WebApi
         /// <param name="timespan">Duration in seconds, to keep the cache.</param>
         /// <param name="requireAuthentication">Value that specifies whether to use authentication for cache or not.</param>
         /// <param name="useAbsoluteUrl">Value that specifies whether to use the absolute URL for cache identifiation or not.</param>
-        public WebApiCache(int timespan = 60, bool requireAuthentication = false, bool useAbsoluteUrl = false)
+        public WebApiCacheAttribute(int timespan = 60, bool requireAuthentication = false, bool useAbsoluteUrl = false)
         {
             if (timespan <= 0)
                 throw new ArgumentOutOfRangeException("timespan");

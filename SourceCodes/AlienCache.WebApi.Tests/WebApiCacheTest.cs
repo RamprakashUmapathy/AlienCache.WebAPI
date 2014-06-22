@@ -42,7 +42,7 @@ namespace Aliencube.AlienCache.WebApi.Tests
 
             var actionContext = ContextUtil.GetActionContext(this._request);
 
-            var cache = new WebApiCache();
+            var cache = new WebApiCacheAttribute();
             cache.OnActionExecuting(actionContext);
 
             Assert.AreEqual(expected, actionContext.Response);
@@ -60,7 +60,7 @@ namespace Aliencube.AlienCache.WebApi.Tests
             var actionContext = ContextUtil.GetActionContext(this._request);
             var actionExecutedContext = ContextUtil.GetActionExecutedContext(this._request, this._response);
 
-            var cache = new WebApiCache();
+            var cache = new WebApiCacheAttribute();
             cache.OnActionExecuting(actionContext);
             cache.OnActionExecuted(actionExecutedContext);
 
