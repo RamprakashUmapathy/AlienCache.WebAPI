@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlienCache.WebApi", "AlienCache.WebApi\AlienCache.WebApi.csproj", "{1BC66503-9671-4F4C-B4B7-5C72DC9C2AC6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documents", "Documents", "{58B40D32-B03B-4CAB-8BDD-A1D6AB63DBAA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Properties", "Properties", "{28D6BE0A-E719-497F-BC62-79870EED1A76}"
+	ProjectSection(SolutionItems) = preProject
+		..\Documents\Properties\SharedAssemblyInfo.cs = ..\Documents\Properties\SharedAssemblyInfo.cs
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1BC66503-9671-4F4C-B4B7-5C72DC9C2AC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BC66503-9671-4F4C-B4B7-5C72DC9C2AC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BC66503-9671-4F4C-B4B7-5C72DC9C2AC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BC66503-9671-4F4C-B4B7-5C72DC9C2AC6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{28D6BE0A-E719-497F-BC62-79870EED1A76} = {58B40D32-B03B-4CAB-8BDD-A1D6AB63DBAA}
+	EndGlobalSection
+EndGlobal
