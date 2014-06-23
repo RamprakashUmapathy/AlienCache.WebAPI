@@ -173,7 +173,7 @@ namespace Aliencube.AlienCache.WebApi
             var response = actionContext.Request.CreateResponse(HttpStatusCode.NotModified);
             var content = new StringContent(value);
             var contentType = this._cache.Get(this._responseContentType) as MediaTypeHeaderValue ??
-                              new MediaTypeHeaderValue(this._cacheKey.Split(new string[] { "|" }, StringSplitOptions.RemoveEmptyEntries)[1]);
+                              new MediaTypeHeaderValue(this._cacheKey.Split(new string[] { "|" }, StringSplitOptions.RemoveEmptyEntries)[1]) { CharSet = "utf-8" };
 
             content.Headers.ContentType = contentType;
             response.Content = content;
