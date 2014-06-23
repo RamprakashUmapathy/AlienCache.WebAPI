@@ -53,17 +53,31 @@ namespace Aliencube.AlienCache.WebApi
             if (actionExecutedContext == null)
                 throw new ArgumentNullException("actionExecutedContext");
 
+            var response = actionExecutedContext.Response;
+            if (response == null)
+                return;
+
+            var content = response.Content;
+            if (content == null)
+                return;
+
             var now = DateTime.Now;
 
             if (!this._cache.Contains(this._cacheKey))
             {
-                var body = actionExecutedContext.Response.Content.ReadAsStringAsync().Result;
+                var body = content.ReadAsStringAsync().Result;
                 this._cache.Add(this._cacheKey, body, now.AddSeconds(this._timespan));
             }
 
             if (!this._cache.Contains(this._responseContentType))
             {
-                this._cache.Add(this._responseContentType, actionExecutedContext.Response.Content.Headers.ContentType, now.AddSeconds(this._timespan));
+                var contentType = new MediaTypeHeaderValue("text/plain");
+
+                var headers = content.Headers;
+                if (headers != null && headers.ContentType != null)
+                    contentType = headers.ContentType;
+
+                this._cache.Add(this._responseContentType, contentType, now.AddSeconds(this._timespan));
             }
 
             if (this.IsCacheable(actionExecutedContext.ActionContext))
