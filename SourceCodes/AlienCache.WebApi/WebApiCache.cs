@@ -176,6 +176,7 @@ namespace Aliencube.AlienCache.WebApi
                               new MediaTypeHeaderValue(this._cacheKey.Split(new string[] { "|" }, StringSplitOptions.RemoveEmptyEntries)[1]) { CharSet = "utf-8" };
 
             content.Headers.ContentType = contentType;
+            content.Headers.Add("X-Aliencube-Cached", "Cached");
             response.Content = content;
             response.Headers.CacheControl = this.GetClientCache();
 
