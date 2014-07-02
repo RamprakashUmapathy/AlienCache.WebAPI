@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Aliencube.AlienCache.WebApi.Interfaces;
+using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -19,85 +20,25 @@ namespace Aliencube.AlienCache.WebApi
 
         private readonly ObjectCache _cache;
 
-        private int _timespan;
-        private AuthenticationType _authenticationType;
-        private string _username;
-        private string _password;
-        private string _authKey;
-        private bool _useAbsoluteUrl;
-
         private string _cacheKey;
         private string _responseContentType;
+        private IConfigurationSettings _settings;
+        private Type _configurationSettingsType;
 
         /// <summary>
-        /// Initialises a new instance of the WebApiCache class.
+        /// Gets or sets the type of the configuration settings.
         /// </summary>
-        public WebApiCacheAttribute()
+        public Type ConfigurationSettingsType
         {
-            this._timespan = 60;
-            this._authenticationType = AuthenticationType.Anonymous;
-            this._useAbsoluteUrl = false;
-            this._cache = MemoryCache.Default;
-        }
-
-        /// <summary>
-        /// Gets or sets the duration in seconds, which determines cache to be alive.
-        /// </summary>
-        public int TimeSpan
-        {
-            get { return this._timespan; }
+            get
+            {
+                return this._configurationSettingsType;
+            }
             set
             {
-                if (value <= 0)
-                    value = 60;
-
-                this._timespan = value;
+                this._configurationSettingsType = value;
+                this._settings = Activator.CreateInstance(this._configurationSettingsType) as IConfigurationSettings;
             }
-        }
-
-        /// <summary>
-        /// Gets or sets the authentication type.
-        /// </summary>
-        public AuthenticationType AuthenticationType
-        {
-            get { return this._authenticationType; }
-            set { this._authenticationType = value; }
-        }
-
-        /// <summary>
-        /// Gets or sets the username for authentication.
-        /// </summary>
-        public string Username
-        {
-            get { return this._username; }
-            set { this._username = value; }
-        }
-
-        /// <summary>
-        /// Gets or sets the password for authentication.
-        /// </summary>
-        public string Password
-        {
-            get { return this._password; }
-            set { this._password = value; }
-        }
-
-        /// <summary>
-        /// Gets or sets the auth key for authentication.
-        /// </summary>
-        public string AuthKey
-        {
-            get { return this._authKey; }
-            set { this._authKey = value; }
-        }
-
-        /// <summary>
-        /// Gets or sets the value that specifies whether to use absolute URL or not.
-        /// </summary>
-        public bool UseAbsoluteUrl
-        {
-            get { return this._useAbsoluteUrl; }
-            set { this._useAbsoluteUrl = value; }
         }
 
         /// <summary>
@@ -128,7 +69,7 @@ namespace Aliencube.AlienCache.WebApi
             if (!this._cache.Contains(this._cacheKey))
             {
                 var body = content.ReadAsStringAsync().Result;
-                this._cache.Add(this._cacheKey, body, now.AddSeconds(this._timespan));
+                this._cache.Add(this._cacheKey, body, now.AddSeconds(this._settings.TimeSpan));
             }
 
             if (!this._cache.Contains(this._responseContentType))
@@ -139,7 +80,7 @@ namespace Aliencube.AlienCache.WebApi
                 if (headers != null && headers.ContentType != null)
                     contentType = headers.ContentType;
 
-                this._cache.Add(this._responseContentType, contentType, now.AddSeconds(this._timespan));
+                this._cache.Add(this._responseContentType, contentType, now.AddSeconds(this._settings.TimeSpan));
             }
 
             if (this.IsCacheable(actionExecutedContext.ActionContext))
@@ -196,7 +137,7 @@ namespace Aliencube.AlienCache.WebApi
                 throw new ArgumentNullException("actionContext");
             }
 
-            if (this.AuthenticationType == AuthenticationType.Basic && !Thread.CurrentPrincipal.Identity.IsAuthenticated)
+            if (this._settings.AuthenticationType == AuthenticationType.Basic && !Thread.CurrentPrincipal.Identity.IsAuthenticated)
             {
                 return false;
             }
@@ -220,7 +161,7 @@ namespace Aliencube.AlienCache.WebApi
                 throw new ArgumentNullException("actionContext");
             }
 
-            var path = this.UseAbsoluteUrl
+            var path = this._settings.UseAbsoluteUrl
                 ? actionContext.Request.RequestUri.AbsoluteUri
                 : actionContext.Request.RequestUri.AbsolutePath;
 
@@ -271,7 +212,7 @@ namespace Aliencube.AlienCache.WebApi
         /// <returns>Returns the client cache.</returns>
         private CacheControlHeaderValue GetClientCache()
         {
-            return new CacheControlHeaderValue { MaxAge = System.TimeSpan.FromSeconds(this.TimeSpan), MustRevalidate = true };
+            return new CacheControlHeaderValue { MaxAge = System.TimeSpan.FromSeconds(this._settings.TimeSpan), MustRevalidate = true };
         }
     }
 }
