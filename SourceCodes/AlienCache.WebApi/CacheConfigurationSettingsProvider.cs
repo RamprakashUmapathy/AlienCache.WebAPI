@@ -27,38 +27,6 @@ namespace Aliencube.AlienCache.WebApi
         }
 
         /// <summary>
-        /// Gets the authentication type.
-        /// </summary>
-        public AuthenticationType AuthenticationType
-        {
-            get { return this._settings.AuthenticationType; }
-        }
-
-        /// <summary>
-        /// Gets the username for authentication.
-        /// </summary>
-        public string Username
-        {
-            get { return this._settings.Username; }
-        }
-
-        /// <summary>
-        /// Gets the password for authentication.
-        /// </summary>
-        public string Password
-        {
-            get { return this._settings.Password; }
-        }
-
-        /// <summary>
-        /// Gets the authentication key.
-        /// </summary>
-        public string AuthenticationKey
-        {
-            get { return this._settings.AuthenticationKey; }
-        }
-
-        /// <summary>
         /// Gets the value that specifies whether to use absolute URL or not.
         /// </summary>
         public bool UseAbsoluteUrl

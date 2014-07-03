@@ -5,7 +5,6 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.Caching;
-using System.Threading;
 using System.Web.Http.Controllers;
 using System.Web.Http.Filters;
 
@@ -22,8 +21,9 @@ namespace Aliencube.AlienCache.WebApi
 
         private string _cacheKey;
         private string _responseContentType;
+
+        private Type _cachConfigurationSettingsProviderType;
         private ICacheConfigurationSettingsProvider _settings;
-        private Type _configurationSettingsType;
 
         /// <summary>
         /// Initialises a new instance of the WebApiCacheAttribute class.
@@ -34,18 +34,18 @@ namespace Aliencube.AlienCache.WebApi
         }
 
         /// <summary>
-        /// Gets or sets the type of the configuration settings.
+        /// Gets or sets the type of the cache configuration settings provider.
         /// </summary>
-        public Type ConfigurationSettingsType
+        public Type CachConfigurationSettingsProviderType
         {
             get
             {
-                return this._configurationSettingsType;
+                return this._cachConfigurationSettingsProviderType;
             }
             set
             {
-                this._configurationSettingsType = value;
-                this._settings = Activator.CreateInstance(this._configurationSettingsType) as ICacheConfigurationSettingsProvider;
+                this._cachConfigurationSettingsProviderType = value;
+                this._settings = Activator.CreateInstance(this._cachConfigurationSettingsProviderType) as ICacheConfigurationSettingsProvider;
             }
         }
 
@@ -148,11 +148,6 @@ namespace Aliencube.AlienCache.WebApi
             if (actionContext == null)
             {
                 throw new ArgumentNullException("actionContext");
-            }
-
-            if (this._settings.AuthenticationType == AuthenticationType.Basic && !Thread.CurrentPrincipal.Identity.IsAuthenticated)
-            {
-                return false;
             }
 
             if (actionContext.Request.Method != HttpMethod.Get)
