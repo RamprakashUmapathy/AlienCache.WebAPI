@@ -22,8 +22,16 @@ namespace Aliencube.AlienCache.WebApi
 
         private string _cacheKey;
         private string _responseContentType;
-        private IConfigurationSettings _settings;
+        private ICacheConfigurationSettingsProvider _settings;
         private Type _configurationSettingsType;
+
+        /// <summary>
+        /// Initialises a new instance of the WebApiCacheAttribute class.
+        /// </summary>
+        public WebApiCacheAttribute()
+        {
+            this._cache = MemoryCache.Default;
+        }
 
         /// <summary>
         /// Gets or sets the type of the configuration settings.
@@ -37,7 +45,7 @@ namespace Aliencube.AlienCache.WebApi
             set
             {
                 this._configurationSettingsType = value;
-                this._settings = Activator.CreateInstance(this._configurationSettingsType) as IConfigurationSettings;
+                this._settings = Activator.CreateInstance(this._configurationSettingsType) as ICacheConfigurationSettingsProvider;
             }
         }
 
@@ -54,6 +62,11 @@ namespace Aliencube.AlienCache.WebApi
 
             var response = actionExecutedContext.Response;
             if (response == null)
+            {
+                return;
+            }
+
+            if (response.StatusCode == HttpStatusCode.InternalServerError || response.StatusCode == HttpStatusCode.ServiceUnavailable)
             {
                 return;
             }

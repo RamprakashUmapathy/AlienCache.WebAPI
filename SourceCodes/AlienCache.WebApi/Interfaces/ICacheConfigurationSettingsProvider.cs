@@ -1,9 +1,9 @@
 ﻿namespace Aliencube.AlienCache.WebApi.Interfaces
 {
     /// <summary>
-    /// This provides interfaces to the ConfigurationSettings class.
+    /// This provides interfaces to the CacheConfigurationSettingsProvider class.
     /// </summary>
-    public interface IConfigurationSettings
+    public interface ICacheConfigurationSettingsProvider
     {
         /// <summary>
         /// Gets the duration in seconds, which determines cache to be alive.
