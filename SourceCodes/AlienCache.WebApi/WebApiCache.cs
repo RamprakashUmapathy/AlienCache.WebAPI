@@ -79,8 +79,9 @@ namespace Aliencube.AlienCache.WebApi
             }
 
             var now = DateTime.Now;
+            var callback = this.GetCallbackFunction(actionExecutedContext.Request);
 
-            this.AddResponseToCache(content, now);
+            this.AddResponseToCache(content, callback, now);
             this.AddContentTypeToCache(content, now);
             this.AddCacheHeaderControl(actionExecutedContext);
 
@@ -130,17 +131,30 @@ namespace Aliencube.AlienCache.WebApi
         {
             if (statusCode == HttpStatusCode.InternalServerError || statusCode == HttpStatusCode.ServiceUnavailable)
             {
-                return true;
+                return false;
             }
-            return false;
+            return true;
+        }
+
+        /// <summary>
+        /// Gets the callback function name.
+        /// </summary>
+        /// <param name="request"><c>HttpRequestMessage</c> instance.</param>
+        /// <returns>Returns the callback function name.</returns>
+        private string GetCallbackFunction(HttpRequestMessage request)
+        {
+            var qs = request.RequestUri.ParseQueryString();
+            var callback = qs.Get("callback");
+            return callback;
         }
 
         /// <summary>
         /// Adds response data to the cache.
         /// </summary>
         /// <param name="content"><c>HttpContent</c> instance.</param>
+        /// <param name="callback">Callback function name.</param>
         /// <param name="now">Current <c>DateTime</c> instance.</param>
-        private void AddResponseToCache(HttpContent content, DateTime now)
+        private void AddResponseToCache(HttpContent content, string callback, DateTime now)
         {
             if (this._cache.Contains(this._cacheKey))
             {
@@ -148,6 +162,13 @@ namespace Aliencube.AlienCache.WebApi
             }
 
             var body = content.ReadAsStringAsync().Result;
+            if (content.Headers.ContentType.MediaType == "text/javascript")
+            {
+                body = body.Replace(callback, "");
+                var index = body.IndexOf("(", StringComparison.Ordinal);
+                var lastIndex = body.LastIndexOf(")", StringComparison.Ordinal);
+                body = body.Substring(index + 1, lastIndex - index - 1);
+            }
             this._cache.Add(this._cacheKey, body, now.AddSeconds(this._settings.TimeSpan));
         }
 
