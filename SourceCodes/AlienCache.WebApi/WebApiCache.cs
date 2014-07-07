@@ -269,17 +269,38 @@ namespace Aliencube.AlienCache.WebApi
                 return null;
             }
 
-            var response = actionContext.Request.CreateResponse(HttpStatusCode.OK);
             var content = new StringContent(value);
             var contentType = this._cache.Get(this._responseContentType) as MediaTypeHeaderValue ??
                               new MediaTypeHeaderValue(this._cacheKey.Split(new string[] { "|" }, StringSplitOptions.RemoveEmptyEntries)[1]) { CharSet = "utf-8" };
 
+            string callback;
+            if (this.IsJsonpRequest(actionContext.Request, out callback))
+            {
+                content = new StringContent(String.Format("{0}({1})", callback, value));
+                contentType = new MediaTypeHeaderValue("text/javascript") { CharSet = "utf-8" };
+            }
+
             content.Headers.ContentType = contentType;
             content.Headers.Add("X-Aliencube-Cached", "Cached");
+
+            var response = actionContext.Request.CreateResponse(HttpStatusCode.OK);
             response.Content = content;
             response.Headers.CacheControl = this.GetClientCache();
 
             return response;
+        }
+
+        /// <summary>
+        /// Checks whether the reqeust contains JSONP callback function or not.
+        /// </summary>
+        /// <param name="request"><c>HttpRequestMessage</c> instance.</param>
+        /// <param name="callback">Callback function name.</param>
+        /// <returns>Returns <c>True</c>, if the request contains JSONP callback function; otherwise returns <c>False</c>.</returns>
+        private bool IsJsonpRequest(HttpRequestMessage request, out string callback)
+        {
+            var qs = request.RequestUri.ParseQueryString();
+            callback = qs.Get("callback");
+            return !String.IsNullOrWhiteSpace(callback);
         }
 
         /// <summary>
