@@ -66,7 +66,8 @@ namespace Aliencube.AlienCache.WebApi
                 return;
             }
 
-            if (response.StatusCode == HttpStatusCode.InternalServerError || response.StatusCode == HttpStatusCode.ServiceUnavailable)
+            var statusCode = response.StatusCode;
+            if (!this.IsStatusCodeCacheable(statusCode))
             {
                 return;
             }
@@ -79,27 +80,9 @@ namespace Aliencube.AlienCache.WebApi
 
             var now = DateTime.Now;
 
-            if (!this._cache.Contains(this._cacheKey))
-            {
-                var body = content.ReadAsStringAsync().Result;
-                this._cache.Add(this._cacheKey, body, now.AddSeconds(this._settings.TimeSpan));
-            }
-
-            if (!this._cache.Contains(this._responseContentType))
-            {
-                var contentType = new MediaTypeHeaderValue("text/plain");
-
-                var headers = content.Headers;
-                if (headers != null && headers.ContentType != null)
-                    contentType = headers.ContentType;
-
-                this._cache.Add(this._responseContentType, contentType, now.AddSeconds(this._settings.TimeSpan));
-            }
-
-            if (this.IsCacheable(actionExecutedContext.ActionContext))
-            {
-                actionExecutedContext.ActionContext.Response.Headers.CacheControl = this.GetClientCache();
-            }
+            this.AddResponseToCache(content, now);
+            this.AddContentTypeToCache(content, now);
+            this.AddCacheHeaderControl(actionExecutedContext);
 
             base.OnActionExecuted(actionExecutedContext);
         }
@@ -136,6 +119,70 @@ namespace Aliencube.AlienCache.WebApi
             actionContext.Response = response;
 
             base.OnActionExecuting(actionContext);
+        }
+
+        /// <summary>
+        /// Checks whether the status code is cacheable.
+        /// </summary>
+        /// <param name="statusCode"><c>HttpStatusCode</c> instance.</param>
+        /// <returns>Returns <c>True</c>, if the status code is cacheable; otherwise returns <c>False</c>.</returns>
+        private bool IsStatusCodeCacheable(HttpStatusCode statusCode)
+        {
+            if (statusCode == HttpStatusCode.InternalServerError || statusCode == HttpStatusCode.ServiceUnavailable)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Adds response data to the cache.
+        /// </summary>
+        /// <param name="content"><c>HttpContent</c> instance.</param>
+        /// <param name="now">Current <c>DateTime</c> instance.</param>
+        private void AddResponseToCache(HttpContent content, DateTime now)
+        {
+            if (this._cache.Contains(this._cacheKey))
+            {
+                return;
+            }
+
+            var body = content.ReadAsStringAsync().Result;
+            this._cache.Add(this._cacheKey, body, now.AddSeconds(this._settings.TimeSpan));
+        }
+
+        /// <summary>
+        /// Adds content type to the cache.
+        /// </summary>
+        /// <param name="content"><c>HttpContent</c> instance.</param>
+        /// <param name="now">Current <c>DateTime</c> instance.</param>
+        private void AddContentTypeToCache(HttpContent content, DateTime now)
+        {
+            if (this._cache.Contains(this._responseContentType))
+            {
+                return;
+            }
+
+            var contentType = new MediaTypeHeaderValue("text/plain");
+
+            var headers = content.Headers;
+            if (headers != null && headers.ContentType != null)
+                contentType = headers.ContentType;
+
+            this._cache.Add(this._responseContentType, contentType, now.AddSeconds(this._settings.TimeSpan));
+        }
+
+        /// <summary>
+        /// Adds cache header control.
+        /// </summary>
+        /// <param name="actionExecutedContext">The action executed context instance.</param>
+        private void AddCacheHeaderControl(HttpActionExecutedContext actionExecutedContext)
+        {
+            if (!this.IsCacheable(actionExecutedContext.ActionContext))
+            {
+                return;
+            }
+            actionExecutedContext.ActionContext.Response.Headers.CacheControl = this.GetClientCache();
         }
 
         /// <summary>
