@@ -1,5 +1,9 @@
 using Aliencube.AlienCache.WebApi.Interfaces;
 using Aliencube.AlienCache.WebApi.Properties;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 
 namespace Aliencube.AlienCache.WebApi
 {
@@ -32,6 +36,23 @@ namespace Aliencube.AlienCache.WebApi
         public bool UseAbsoluteUrl
         {
             get { return this._settings.UseAbsoluteUrl; }
+        }
+
+        /// <summary>
+        /// Gets the list of <c>HttpStatusCode</c>s that are cacheable.
+        /// </summary>
+        public IEnumerable<HttpStatusCode> CacheableStatusCodes
+        {
+            get
+            {
+                HttpStatusCode result;
+                var codes = this._settings
+                                .CacheableStatusCodes
+                                .Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries)
+                                .Select(p => Enum.TryParse(p, true, out result) ? result : HttpStatusCode.InternalServerError)
+                                .Where(p => p != HttpStatusCode.InternalServerError);
+                return codes;
+            }
         }
     }
 }

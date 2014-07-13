@@ -1,4 +1,7 @@
-﻿namespace Aliencube.AlienCache.WebApi.Interfaces
+﻿using System.Collections.Generic;
+using System.Net;
+
+namespace Aliencube.AlienCache.WebApi.Interfaces
 {
     /// <summary>
     /// This provides interfaces to the CacheConfigurationSettingsProvider class.
@@ -14,5 +17,10 @@
         /// Gets the value that specifies whether to use absolute URL or not.
         /// </summary>
         bool UseAbsoluteUrl { get; }
+
+        /// <summary>
+        /// Gets the list of <c>HttpStatusCode</c>s that are cacheable.
+        /// </summary>
+        IEnumerable<HttpStatusCode> CacheableStatusCodes { get; }
     }
 }

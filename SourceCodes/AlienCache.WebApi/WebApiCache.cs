@@ -129,11 +129,8 @@ namespace Aliencube.AlienCache.WebApi
         /// <returns>Returns <c>True</c>, if the status code is cacheable; otherwise returns <c>False</c>.</returns>
         private bool IsStatusCodeCacheable(HttpStatusCode statusCode)
         {
-            if (statusCode == HttpStatusCode.InternalServerError || statusCode == HttpStatusCode.ServiceUnavailable)
-            {
-                return false;
-            }
-            return true;
+            var cacheable = this._settings.CacheableStatusCodes.Contains(statusCode);
+            return cacheable;
         }
 
         /// <summary>
