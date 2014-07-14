@@ -1,4 +1,3 @@
-using System.Security.Policy;
 using Aliencube.AlienCache.WebApi.Interfaces;
 using FluentAssertions;
 using NSubstitute;
@@ -7,16 +6,16 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace Aliencube.AlienCache.WebApi.Tests
 {
     [TestFixture]
-    public class WebApiCacheTest
+    public class WebApiCacheHelperTest
     {
         #region SetUp / TearDown
 
         private HttpRequestMessage _request;
-        private HttpResponseMessage _response;
         private IWebApiCacheHelper _helper;
 
         [SetUp]
@@ -29,9 +28,6 @@ namespace Aliencube.AlienCache.WebApi.Tests
         {
             if (this._request != null)
                 this._request.Dispose();
-
-            if (this._response != null)
-                this._response.Dispose();
 
             if (this._helper != null)
                 this._helper.Dispose();
@@ -103,7 +99,7 @@ namespace Aliencube.AlienCache.WebApi.Tests
         [TestCase("text/plain", "", "RESPONSE", "RESPONSE")]
         [TestCase("text/html", "", "RESPONSE", "RESPONSE")]
         [TestCase("application/json", "jQuery_1234567890", "RESPONSE", "RESPONSE")]
-        public void GetResponseContent_GivenResponse_ReturnResponseContent(string mediaType, string callback, string body, string expected)
+        public void GetResponseContent_GivenContent_ReturnResponseContent(string mediaType, string callback, string body, string expected)
         {
             var content = new StringContent(body);
             content.Headers.ContentType.MediaType = mediaType;
@@ -115,38 +111,59 @@ namespace Aliencube.AlienCache.WebApi.Tests
         }
 
         [Test]
-        [TestCase("GET", "/repos/user/repo/git/refs/heads/master", null)]
-        public void OnActionExecuting_GivenRequest_ReturnResponse(string method, string path, object expected)
+        [TestCase("", "text/plain")]
+        [TestCase("text/html", "text/html")]
+        [TestCase("application/json", "application/json")]
+        public void GetContentHeaderContentType_GivenContent_ReturnContentMediaType(string mediaType, string expected)
         {
-            this._request = new HttpRequestMessage(new HttpMethod(method), (path.StartsWith("/")
-                                                                                ? new Uri("http://localhost" + path)
-                                                                                : new Uri(path)));
+            var content = new StringContent("RESPONSE");
+            if (!String.IsNullOrWhiteSpace(mediaType))
+            {
+                content.Headers.ContentType = new MediaTypeHeaderValue(mediaType);
+            }
 
-            var actionContext = ContextUtil.GetActionContext(this._request);
+            var settings = Substitute.For<IWebApiCacheConfigurationSettingsProvider>();
+            this._helper = new WebApiCacheHelper(settings);
 
-            var cache = new WebApiCacheAttribute();
-            cache.OnActionExecuting(actionContext);
-
-            Assert.AreEqual(expected, actionContext.Response);
+            this._helper.GetContentHeaderContentType(content).MediaType.Should().Be(expected);
         }
 
         [Test]
-        [TestCase("GET", "/repos/user/repo/git/refs/heads/master", "response contents")]
-        public void OnActionExtecuted_GivenRequestAndResponse_ReturnResponse(string method, string path, string expected)
+        [TestCase("/v3?url=repo/abc/def", false, "", "/v3")]
+        [TestCase("/v3?url=repo/abc/def", true, "url", "/v3/repo/abc/def")]
+        [TestCase("/v3?url=repo/abc/def", true, "abc", "/v3")]
+        public void GetActionPath_GivenActionContext_ReturnActionPath(string path, bool useQueryStringAsKey, string queryStringKey, string expected)
         {
-            this._request = new HttpRequestMessage(new HttpMethod(method), (path.StartsWith("/")
+            this._request = new HttpRequestMessage(new HttpMethod("GET"), (path.StartsWith("/")
                                                                                 ? new Uri("http://localhost" + path)
                                                                                 : new Uri(path)));
-            this._response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(expected) };
 
             var actionContext = ContextUtil.GetActionContext(this._request);
-            var actionExecutedContext = ContextUtil.GetActionExecutedContext(this._request, this._response);
 
-            var cache = new WebApiCacheAttribute();
-            cache.OnActionExecuting(actionContext);
-            cache.OnActionExecuted(actionExecutedContext);
+            var settings = Substitute.For<IWebApiCacheConfigurationSettingsProvider>();
+            settings.UseAbsoluteUrl.Returns(false);
+            settings.UseQueryStringAsKey.Returns(useQueryStringAsKey);
+            settings.QueryStringKey.Returns(queryStringKey);
 
-            Assert.AreEqual(expected, actionExecutedContext.Response.Content.ReadAsStringAsync().Result);
+            this._helper = new WebApiCacheHelper(settings);
+            this._helper.GetActionPath(actionContext).Should().Be(expected);
+        }
+
+        [Test]
+        [TestCase("", null, false)]
+        [TestCase("jQuery_1234567890", "jQuery_1234567890", true)]
+        public void IsJsonRequest_GivenRequest_ReturnValue(string callbackName, string found, bool expected)
+        {
+            var path = "http://localhost" + (String.IsNullOrWhiteSpace(callbackName) ? null : "?callback=" + callbackName);
+            this._request = new HttpRequestMessage(new HttpMethod("GET"), path);
+
+            var settings = Substitute.For<IWebApiCacheConfigurationSettingsProvider>();
+
+            this._helper = new WebApiCacheHelper(settings);
+
+            string callback;
+            this._helper.IsJsonpRequest(this._request, out callback).Should().Be(expected);
+            callback.Should().Be(found);
         }
 
         #endregion Tests

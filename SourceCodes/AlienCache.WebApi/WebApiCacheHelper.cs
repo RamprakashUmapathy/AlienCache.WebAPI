@@ -170,7 +170,7 @@ namespace Aliencube.AlienCache.WebApi
         /// </summary>
         /// <param name="actionContext">The action context instance.</param>
         /// <returns>Returns the cache key from the query string.</returns>
-        public string GetCacheKeyFromQueryString(HttpActionContext actionContext)
+        private string GetCacheKeyFromQueryString(HttpActionContext actionContext)
         {
             if (!this.Settings.UseQueryStringAsKey)
             {
