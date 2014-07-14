@@ -22,7 +22,7 @@ namespace Aliencube.AlienCache.WebApi
         private string _cacheKey;
         private string _responseContentType;
 
-        private Type _webApiCachConfigurationSettingsProviderType;
+        private Type _webApiCacheConfigurationSettingsProviderType;
         private IWebApiCacheConfigurationSettingsProvider _settings;
         private IWebApiCacheHelper _helper;
 
@@ -37,16 +37,16 @@ namespace Aliencube.AlienCache.WebApi
         /// <summary>
         /// Gets or sets the type of the cache configuration settings provider.
         /// </summary>
-        public Type WebApiCachConfigurationSettingsProviderType
+        public Type WebApiCacheConfigurationSettingsProviderType
         {
             get
             {
-                return this._webApiCachConfigurationSettingsProviderType;
+                return this._webApiCacheConfigurationSettingsProviderType;
             }
             set
             {
-                this._webApiCachConfigurationSettingsProviderType = value;
-                this._settings = Activator.CreateInstance(this._webApiCachConfigurationSettingsProviderType) as IWebApiCacheConfigurationSettingsProvider;
+                this._webApiCacheConfigurationSettingsProviderType = value;
+                this._settings = Activator.CreateInstance(this._webApiCacheConfigurationSettingsProviderType) as IWebApiCacheConfigurationSettingsProvider;
                 this._helper = new WebApiCacheHelper(this._settings);
             }
         }

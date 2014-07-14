@@ -69,7 +69,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="WebApiCache.cs" />
+    <Compile Include="WebApiCacheAttribute.cs" />
     <Compile Include="WebApiCacheHelper.cs" />
   </ItemGroup>
   <ItemGroup>
