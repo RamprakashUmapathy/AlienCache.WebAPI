@@ -74,7 +74,8 @@ namespace Aliencube.AlienCache.WebApi
                 throw new ArgumentNullException("actionContext");
             }
 
-            var cacheable = actionContext.Request.Method == HttpMethod.Get;
+            var method = actionContext.Request.Method;
+            var cacheable = method == HttpMethod.Get || method == HttpMethod.Options;
             return cacheable;
         }
 

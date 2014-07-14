@@ -1,3 +1,4 @@
+using System.Security.Policy;
 using Aliencube.AlienCache.WebApi.Interfaces;
 using FluentAssertions;
 using NSubstitute;
@@ -58,6 +59,42 @@ namespace Aliencube.AlienCache.WebApi.Tests
             this._helper = new WebApiCacheHelper(settings);
 
             this._helper.IsStatusCodeCacheable(statusCode).Should().Be(expected);
+        }
+
+        [Test]
+        [TestCase("", null)]
+        [TestCase("callback", "")]
+        [TestCase("callback=", "")]
+        [TestCase("callback=jQuery_1234567890", "jQuery_1234567890")]
+        public void GetCallbackFunction_GivenRequest_ReturnCallbackFunction(string qs, string expected)
+        {
+            var method = new HttpMethod("GET");
+            var url = String.Format("http://localhost{0}", (String.IsNullOrWhiteSpace(qs) ? null : ("?" + qs)));
+            var uri = new Uri(url);
+            this._request = new HttpRequestMessage(method, uri);
+
+            var settings = Substitute.For<IWebApiCacheConfigurationSettingsProvider>();
+            this._helper = new WebApiCacheHelper(settings);
+
+            this._helper.GetCallbackFunction(this._request).Should().Be(expected);
+        }
+
+        [Test]
+        [TestCase("GET", true)]
+        [TestCase("POST", false)]
+        [TestCase("OPTIONS", true)]
+        public void IsCacheable_GivenRequest_ReturnResult(string method, bool expected)
+        {
+            var url = "http://localhost";
+            var uri = new Uri(url);
+            this._request = new HttpRequestMessage(new HttpMethod(method), uri);
+
+            var settings = Substitute.For<IWebApiCacheConfigurationSettingsProvider>();
+            this._helper = new WebApiCacheHelper(settings);
+
+            var actionContext = ContextUtil.GetActionContext(this._request);
+
+            this._helper.IsCacheable(actionContext).Should().Be(expected);
         }
 
         [Test]
