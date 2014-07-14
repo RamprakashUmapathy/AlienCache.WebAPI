@@ -12,13 +12,35 @@ This library is based on @[Emerson Soares](https://twitter.com/emerson_soares)' 
 
 **AlienCache.WebAPI** is a custom action filter attribute, therefore, it should be used for either Web API controllers or individual actions.
 
+
+### Controller Level Definition ###
+
 ```csharp
-[WebApiCache(WebApiCacheConfigurationSettingsProviderType = typeof(WebApiCacheConfigurationSettingsProvider))]
+[WebApiCache(WebApiCacheConfigurationSettingsProviderType =
+                 typeof(WebApiCacheConfigurationSettingsProvider))]
 public class SampleApiController : ApiController
 {
     ...
 }
 ```
+
+
+### Action Level Definition ###
+
+```csharp
+public class SampleApiController : ApiController
+{
+    [WebApiCache(WebApiCacheConfigurationSettingsProviderType =
+                     typeof(WebApiCacheConfigurationSettingsProvider))]
+    public HttpResponseMessage Get()
+    {
+        ...
+    }
+}
+```
+
+
+## Configuration ##
 
 In order to configure the `WebApiCacheAttribute` instance, `Web.config` should be considered.
 
@@ -49,6 +71,11 @@ In order to configure the `WebApiCacheAttribute` instance, `Web.config` should b
 * `UseQueryStringAsKey`: If it is set to `true`, the cache key will use query string value corresponding to a specified key. Default value is `false`.
 * `QueryStringKey`: The key from query string to consider cache key. If `UseQueryStringAsKey` is `false`, this value is ignored.
 * `CacheableStatusCodes`: This is the list of HTTP status codes, delimited by comma, that allow to store into the cache. Default value is `200,304` that is equivalent to `OK` and `Not Modified`.
+
+
+# Contribution #
+
+Your contribution is always welcome! All your work should be done in the`dev` branch. Once you finish your work, please send us a pull request on `dev` for review. Make sure that all your changes **MUST** be covered with test codes; otherwise yours won't get accepted.
 
 
 ## License ##
