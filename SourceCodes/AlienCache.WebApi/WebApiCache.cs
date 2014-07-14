@@ -22,8 +22,9 @@ namespace Aliencube.AlienCache.WebApi
         private string _cacheKey;
         private string _responseContentType;
 
-        private Type _cachConfigurationSettingsProviderType;
-        private ICacheConfigurationSettingsProvider _settings;
+        private Type _webApiCachConfigurationSettingsProviderType;
+        private IWebApiCacheConfigurationSettingsProvider _settings;
+        private IWebApiCacheHelper _helper;
 
         /// <summary>
         /// Initialises a new instance of the WebApiCacheAttribute class.
@@ -36,16 +37,17 @@ namespace Aliencube.AlienCache.WebApi
         /// <summary>
         /// Gets or sets the type of the cache configuration settings provider.
         /// </summary>
-        public Type CachConfigurationSettingsProviderType
+        public Type WebApiCachConfigurationSettingsProviderType
         {
             get
             {
-                return this._cachConfigurationSettingsProviderType;
+                return this._webApiCachConfigurationSettingsProviderType;
             }
             set
             {
-                this._cachConfigurationSettingsProviderType = value;
-                this._settings = Activator.CreateInstance(this._cachConfigurationSettingsProviderType) as ICacheConfigurationSettingsProvider;
+                this._webApiCachConfigurationSettingsProviderType = value;
+                this._settings = Activator.CreateInstance(this._webApiCachConfigurationSettingsProviderType) as IWebApiCacheConfigurationSettingsProvider;
+                this._helper = new WebApiCacheHelper(this._settings);
             }
         }
 
@@ -67,7 +69,7 @@ namespace Aliencube.AlienCache.WebApi
             }
 
             var statusCode = response.StatusCode;
-            if (!this.IsStatusCodeCacheable(statusCode))
+            if (!this._helper.IsStatusCodeCacheable(statusCode))
             {
                 return;
             }
@@ -79,7 +81,7 @@ namespace Aliencube.AlienCache.WebApi
             }
 
             var now = DateTime.Now;
-            var callback = this.GetCallbackFunction(actionExecutedContext.Request);
+            var callback = this._helper.GetCallbackFunction(actionExecutedContext.Request);
 
             this.AddResponseToCache(content, callback, now);
             this.AddContentTypeToCache(content, now);
@@ -99,7 +101,7 @@ namespace Aliencube.AlienCache.WebApi
                 throw new ArgumentNullException("actionContext");
             }
 
-            if (!this.IsCacheable(actionContext))
+            if (!this._helper.IsCacheable(actionContext))
             {
                 return;
             }
@@ -123,29 +125,6 @@ namespace Aliencube.AlienCache.WebApi
         }
 
         /// <summary>
-        /// Checks whether the status code is cacheable.
-        /// </summary>
-        /// <param name="statusCode"><c>HttpStatusCode</c> instance.</param>
-        /// <returns>Returns <c>True</c>, if the status code is cacheable; otherwise returns <c>False</c>.</returns>
-        private bool IsStatusCodeCacheable(HttpStatusCode statusCode)
-        {
-            var cacheable = this._settings.CacheableStatusCodes.Contains(statusCode);
-            return cacheable;
-        }
-
-        /// <summary>
-        /// Gets the callback function name.
-        /// </summary>
-        /// <param name="request"><c>HttpRequestMessage</c> instance.</param>
-        /// <returns>Returns the callback function name.</returns>
-        private string GetCallbackFunction(HttpRequestMessage request)
-        {
-            var qs = request.RequestUri.ParseQueryString();
-            var callback = qs.Get("callback");
-            return callback;
-        }
-
-        /// <summary>
         /// Adds response data to the cache.
         /// </summary>
         /// <param name="content"><c>HttpContent</c> instance.</param>
@@ -153,21 +132,22 @@ namespace Aliencube.AlienCache.WebApi
         /// <param name="now">Current <c>DateTime</c> instance.</param>
         private void AddResponseToCache(HttpContent content, string callback, DateTime now)
         {
+            if (content == null)
+            {
+                throw new ArgumentNullException("content");
+            }
+
+            if (now == null || now == DateTime.MinValue)
+            {
+                throw new ArgumentNullException("now");
+            }
+
             if (this._cache.Contains(this._cacheKey))
             {
                 return;
             }
 
-            var body = content.ReadAsStringAsync().Result;
-
-            //  Wraps response with callback function for JSONP request.
-            if (content.Headers.ContentType.MediaType == "text/javascript")
-            {
-                body = body.Replace(callback, "");
-                var index = body.IndexOf("(", StringComparison.Ordinal);
-                var lastIndex = body.LastIndexOf(")", StringComparison.Ordinal);
-                body = body.Substring(index + 1, lastIndex - index - 1);
-            }
+            var body = this._helper.GetResponseContent(content, callback);
             this._cache.Add(this._cacheKey, body, now.AddSeconds(this._settings.TimeSpan));
         }
 
@@ -178,16 +158,22 @@ namespace Aliencube.AlienCache.WebApi
         /// <param name="now">Current <c>DateTime</c> instance.</param>
         private void AddContentTypeToCache(HttpContent content, DateTime now)
         {
+            if (content == null)
+            {
+                throw new ArgumentNullException("content");
+            }
+
+            if (now == null || now == DateTime.MinValue)
+            {
+                throw new ArgumentNullException("now");
+            }
+
             if (this._cache.Contains(this._responseContentType))
             {
                 return;
             }
 
-            var contentType = new MediaTypeHeaderValue("text/plain");
-
-            var headers = content.Headers;
-            if (headers != null && headers.ContentType != null)
-                contentType = headers.ContentType;
+            var contentType = this._helper.GetContentHeaderContentType(content);
 
             this._cache.Add(this._responseContentType, contentType, now.AddSeconds(this._settings.TimeSpan));
         }
@@ -198,31 +184,17 @@ namespace Aliencube.AlienCache.WebApi
         /// <param name="actionExecutedContext">The action executed context instance.</param>
         private void AddCacheHeaderControl(HttpActionExecutedContext actionExecutedContext)
         {
-            if (!this.IsCacheable(actionExecutedContext.ActionContext))
+            if (actionExecutedContext == null)
+            {
+                throw new ArgumentNullException("actionExecutedContext");
+            }
+
+            if (!this._helper.IsCacheable(actionExecutedContext.ActionContext))
             {
                 return;
             }
-            actionExecutedContext.ActionContext.Response.Headers.CacheControl = this.GetClientCache();
-        }
 
-        /// <summary>
-        /// Checks whether the request is cacheable or not.
-        /// </summary>
-        /// <param name="actionContext">The action context instance.</param>
-        /// <returns>Returns <c>True</c>, if the request is cacheable; otherwise returns <c>False</c>.</returns>
-        private bool IsCacheable(HttpActionContext actionContext)
-        {
-            if (actionContext == null)
-            {
-                throw new ArgumentNullException("actionContext");
-            }
-
-            if (actionContext.Request.Method != HttpMethod.Get)
-            {
-                return false;
-            }
-
-            return true;
+            actionExecutedContext.ActionContext.Response.Headers.CacheControl = this._helper.GetClientCache();
         }
 
         /// <summary>
@@ -236,16 +208,7 @@ namespace Aliencube.AlienCache.WebApi
                 throw new ArgumentNullException("actionContext");
             }
 
-            var path = this._settings.UseAbsoluteUrl
-                ? actionContext.Request.RequestUri.AbsoluteUri
-                : actionContext.Request.RequestUri.AbsolutePath;
-
-            if (path.EndsWith("/"))
-            {
-                path = path.Substring(0, path.Length - 1);
-            }
-
-            path += this.GetCacheKeyFromQueryString(actionContext);
+            var path = this._helper.GetActionPath(actionContext);
 
             var accept = actionContext.Request.Headers.Accept.FirstOrDefault();
             var mimeType = accept == null ? "text/plain" : accept.ToString();
@@ -255,38 +218,6 @@ namespace Aliencube.AlienCache.WebApi
 
             this._cacheKey = cacheKey;
             this._responseContentType = responseContentType;
-        }
-
-        /// <summary>
-        /// Gets the cache key from the query string.
-        /// </summary>
-        /// <param name="actionContext">The action context instance.</param>
-        /// <returns>Returns the cache key from the query string.</returns>
-        private string GetCacheKeyFromQueryString(HttpActionContext actionContext)
-        {
-            if (!this._settings.UseQueryStringAsKey)
-            {
-                return null;
-            }
-
-            var key = this._settings.QueryStringKey;
-            if (String.IsNullOrWhiteSpace(key))
-            {
-                return null;
-            }
-
-            var value = actionContext.Request.RequestUri.ParseQueryString().Get(key);
-            if (String.IsNullOrWhiteSpace(value))
-            {
-                return null;
-            }
-
-            if (!value.StartsWith("/"))
-            {
-                value = "/" + value;
-            }
-
-            return value;
         }
 
         /// <summary>
@@ -312,7 +243,7 @@ namespace Aliencube.AlienCache.WebApi
                               new MediaTypeHeaderValue(this._cacheKey.Split(new string[] { "|" }, StringSplitOptions.RemoveEmptyEntries)[1]) { CharSet = "utf-8" };
 
             string callback;
-            if (this.IsJsonpRequest(actionContext.Request, out callback))
+            if (this._helper.IsJsonpRequest(actionContext.Request, out callback))
             {
                 content = new StringContent(String.Format("{0}({1})", callback, value));
                 contentType = new MediaTypeHeaderValue("text/javascript") { CharSet = "utf-8" };
@@ -323,31 +254,9 @@ namespace Aliencube.AlienCache.WebApi
 
             var response = actionContext.Request.CreateResponse(HttpStatusCode.OK);
             response.Content = content;
-            response.Headers.CacheControl = this.GetClientCache();
+            response.Headers.CacheControl = this._helper.GetClientCache();
 
             return response;
-        }
-
-        /// <summary>
-        /// Checks whether the reqeust contains JSONP callback function or not.
-        /// </summary>
-        /// <param name="request"><c>HttpRequestMessage</c> instance.</param>
-        /// <param name="callback">Callback function name.</param>
-        /// <returns>Returns <c>True</c>, if the request contains JSONP callback function; otherwise returns <c>False</c>.</returns>
-        private bool IsJsonpRequest(HttpRequestMessage request, out string callback)
-        {
-            var qs = request.RequestUri.ParseQueryString();
-            callback = qs.Get("callback");
-            return !String.IsNullOrWhiteSpace(callback);
-        }
-
-        /// <summary>
-        /// Gets the client cache.
-        /// </summary>
-        /// <returns>Returns the client cache.</returns>
-        private CacheControlHeaderValue GetClientCache()
-        {
-            return new CacheControlHeaderValue { MaxAge = System.TimeSpan.FromSeconds(this._settings.TimeSpan), MustRevalidate = true };
         }
     }
 }

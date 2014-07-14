@@ -10,14 +10,14 @@ namespace Aliencube.AlienCache.WebApi
     /// <summary>
     /// This represents the entity providing configuration settings.
     /// </summary>
-    public class CacheConfigurationSettingsProvider : ICacheConfigurationSettingsProvider
+    public class WebApiCacheConfigurationSettingsProvider : IWebApiCacheConfigurationSettingsProvider
     {
         private readonly Settings _settings;
 
         /// <summary>
         /// Initialises a new instance of the CacheConfigurationSettingsProvider class.
         /// </summary>
-        public CacheConfigurationSettingsProvider()
+        public WebApiCacheConfigurationSettingsProvider()
         {
             this._settings = Settings.Default;
         }

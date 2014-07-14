@@ -1,3 +1,5 @@
+using Aliencube.AlienCache.WebApi.Interfaces;
+using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Net;
@@ -31,6 +33,15 @@ namespace Aliencube.AlienCache.WebApi.Tests
         #endregion SetUp / TearDown
 
         #region Tests
+
+        [Test]
+        public void IsStatusCodeCacheable_GivenConfig_ReturnResult()
+        {
+            var helper = Substitute.For<IWebApiCacheHelper>();
+
+            var settings = Substitute.For<IWebApiCacheConfigurationSettingsProvider>();
+            helper.Settings.Returns(settings);
+        }
 
         [Test]
         [TestCase("GET", "/repos/user/repo/git/refs/heads/master", null)]
