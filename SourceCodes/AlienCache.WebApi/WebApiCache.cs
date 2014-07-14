@@ -159,6 +159,8 @@ namespace Aliencube.AlienCache.WebApi
             }
 
             var body = content.ReadAsStringAsync().Result;
+
+            //  Wraps response with callback function for JSONP request.
             if (content.Headers.ContentType.MediaType == "text/javascript")
             {
                 body = body.Replace(callback, "");
@@ -238,6 +240,13 @@ namespace Aliencube.AlienCache.WebApi
                 ? actionContext.Request.RequestUri.AbsoluteUri
                 : actionContext.Request.RequestUri.AbsolutePath;
 
+            if (path.EndsWith("/"))
+            {
+                path = path.Substring(0, path.Length - 1);
+            }
+
+            path += this.GetCacheKeyFromQueryString(actionContext);
+
             var accept = actionContext.Request.Headers.Accept.FirstOrDefault();
             var mimeType = accept == null ? "text/plain" : accept.ToString();
 
@@ -246,6 +255,38 @@ namespace Aliencube.AlienCache.WebApi
 
             this._cacheKey = cacheKey;
             this._responseContentType = responseContentType;
+        }
+
+        /// <summary>
+        /// Gets the cache key from the query string.
+        /// </summary>
+        /// <param name="actionContext">The action context instance.</param>
+        /// <returns>Returns the cache key from the query string.</returns>
+        private string GetCacheKeyFromQueryString(HttpActionContext actionContext)
+        {
+            if (!this._settings.UseQueryStringAsKey)
+            {
+                return null;
+            }
+
+            var key = this._settings.QueryStringKey;
+            if (String.IsNullOrWhiteSpace(key))
+            {
+                return null;
+            }
+
+            var value = actionContext.Request.RequestUri.ParseQueryString().Get(key);
+            if (String.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+
+            if (!value.StartsWith("/"))
+            {
+                value = "/" + value;
+            }
+
+            return value;
         }
 
         /// <summary>

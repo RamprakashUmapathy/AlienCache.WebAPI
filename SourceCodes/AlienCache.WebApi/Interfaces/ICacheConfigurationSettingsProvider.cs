@@ -19,6 +19,16 @@ namespace Aliencube.AlienCache.WebApi.Interfaces
         bool UseAbsoluteUrl { get; }
 
         /// <summary>
+        /// Gets the value that specifies whether to use query string as a cache key or not.
+        /// </summary>
+        bool UseQueryStringAsKey { get; }
+
+        /// <summary>
+        /// Gets the key from the query string to be used for cache key.
+        /// </summary>
+        string QueryStringKey { get; }
+
+        /// <summary>
         /// Gets the list of <c>HttpStatusCode</c>s that are cacheable.
         /// </summary>
         IEnumerable<HttpStatusCode> CacheableStatusCodes { get; }

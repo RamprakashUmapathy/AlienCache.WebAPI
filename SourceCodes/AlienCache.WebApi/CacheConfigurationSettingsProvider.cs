@@ -39,6 +39,22 @@ namespace Aliencube.AlienCache.WebApi
         }
 
         /// <summary>
+        /// Gets the value that specifies whether to use query string as a cache key or not.
+        /// </summary>
+        public bool UseQueryStringAsKey
+        {
+            get { return this._settings.UseQueryStringAsKey; }
+        }
+
+        /// <summary>
+        /// Gets the key from the query string to be used for cache key.
+        /// </summary>
+        public string QueryStringKey
+        {
+            get { return this._settings.QueryStringKey; }
+        }
+
+        /// <summary>
         /// Gets the list of <c>HttpStatusCode</c>s that are cacheable.
         /// </summary>
         public IEnumerable<HttpStatusCode> CacheableStatusCodes
