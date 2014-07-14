@@ -98,6 +98,23 @@ namespace Aliencube.AlienCache.WebApi.Tests
         }
 
         [Test]
+        [TestCase("text/javascript", "jQuery_1234567890", "jQuery_1234567890(RESPONSE)", "RESPONSE")]
+        [TestCase("application/json", "", "RESPONSE", "RESPONSE")]
+        [TestCase("text/plain", "", "RESPONSE", "RESPONSE")]
+        [TestCase("text/html", "", "RESPONSE", "RESPONSE")]
+        [TestCase("application/json", "jQuery_1234567890", "RESPONSE", "RESPONSE")]
+        public void GetResponseContent_GivenResponse_ReturnResponseContent(string mediaType, string callback, string body, string expected)
+        {
+            var content = new StringContent(body);
+            content.Headers.ContentType.MediaType = mediaType;
+
+            var settings = Substitute.For<IWebApiCacheConfigurationSettingsProvider>();
+            this._helper = new WebApiCacheHelper(settings);
+
+            this._helper.GetResponseContent(content, callback).Should().Be(expected);
+        }
+
+        [Test]
         [TestCase("GET", "/repos/user/repo/git/refs/heads/master", null)]
         public void OnActionExecuting_GivenRequest_ReturnResponse(string method, string path, object expected)
         {
