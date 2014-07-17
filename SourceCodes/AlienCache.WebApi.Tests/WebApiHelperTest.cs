@@ -16,21 +16,26 @@ namespace Aliencube.AlienCache.WebApi.Tests
         #region SetUp / TearDown
 
         private HttpRequestMessage _request;
+        private IWebApiCacheConfigurationSettingsProvider _settings;
         private IWebApiCacheHelper _helper;
 
         [SetUp]
         public void Init()
         {
+            this._settings = Substitute.For<IWebApiCacheConfigurationSettingsProvider>();
         }
 
         [TearDown]
         public void Dispose()
         {
+            if (this._helper != null)
+                this._helper.Dispose();
+
             if (this._request != null)
                 this._request.Dispose();
 
-            if (this._helper != null)
-                this._helper.Dispose();
+            if (this._settings != null)
+                this._settings.Dispose();
         }
 
         #endregion SetUp / TearDown
@@ -49,11 +54,9 @@ namespace Aliencube.AlienCache.WebApi.Tests
                                            HttpStatusCode.NotModified
                                        };
 
-            var settings = Substitute.For<IWebApiCacheConfigurationSettingsProvider>();
-            settings.CacheableStatusCodes.Returns(cacheableStatusCodes);
+            this._settings.CacheableStatusCodes.Returns(cacheableStatusCodes);
 
-            this._helper = new WebApiCacheHelper(settings);
-
+            this._helper = new WebApiCacheHelper(this._settings);
             this._helper.IsStatusCodeCacheable(statusCode).Should().Be(expected);
         }
 
@@ -69,9 +72,7 @@ namespace Aliencube.AlienCache.WebApi.Tests
             var uri = new Uri(url);
             this._request = new HttpRequestMessage(method, uri);
 
-            var settings = Substitute.For<IWebApiCacheConfigurationSettingsProvider>();
-            this._helper = new WebApiCacheHelper(settings);
-
+            this._helper = new WebApiCacheHelper(this._settings);
             this._helper.GetCallbackFunction(this._request).Should().Be(expected);
         }
 
@@ -85,11 +86,9 @@ namespace Aliencube.AlienCache.WebApi.Tests
             var uri = new Uri(url);
             this._request = new HttpRequestMessage(new HttpMethod(method), uri);
 
-            var settings = Substitute.For<IWebApiCacheConfigurationSettingsProvider>();
-            this._helper = new WebApiCacheHelper(settings);
-
             var actionContext = ContextUtil.GetActionContext(this._request);
 
+            this._helper = new WebApiCacheHelper(this._settings);
             this._helper.IsCacheable(actionContext).Should().Be(expected);
         }
 
@@ -104,9 +103,7 @@ namespace Aliencube.AlienCache.WebApi.Tests
             var content = new StringContent(body);
             content.Headers.ContentType.MediaType = mediaType;
 
-            var settings = Substitute.For<IWebApiCacheConfigurationSettingsProvider>();
-            this._helper = new WebApiCacheHelper(settings);
-
+            this._helper = new WebApiCacheHelper(this._settings);
             this._helper.GetResponseContent(content, callback).Should().Be(expected);
         }
 
@@ -122,9 +119,7 @@ namespace Aliencube.AlienCache.WebApi.Tests
                 content.Headers.ContentType = new MediaTypeHeaderValue(mediaType);
             }
 
-            var settings = Substitute.For<IWebApiCacheConfigurationSettingsProvider>();
-            this._helper = new WebApiCacheHelper(settings);
-
+            this._helper = new WebApiCacheHelper(this._settings);
             this._helper.GetContentHeaderContentType(content).MediaType.Should().Be(expected);
         }
 
@@ -140,12 +135,11 @@ namespace Aliencube.AlienCache.WebApi.Tests
 
             var actionContext = ContextUtil.GetActionContext(this._request);
 
-            var settings = Substitute.For<IWebApiCacheConfigurationSettingsProvider>();
-            settings.UseAbsoluteUrl.Returns(false);
-            settings.UseQueryStringAsKey.Returns(useQueryStringAsKey);
-            settings.QueryStringKey.Returns(queryStringKey);
+            this._settings.UseAbsoluteUrl.Returns(false);
+            this._settings.UseQueryStringAsKey.Returns(useQueryStringAsKey);
+            this._settings.QueryStringKey.Returns(queryStringKey);
 
-            this._helper = new WebApiCacheHelper(settings);
+            this._helper = new WebApiCacheHelper(this._settings);
             this._helper.GetActionPath(actionContext).Should().Be(expected);
         }
 
@@ -157,9 +151,7 @@ namespace Aliencube.AlienCache.WebApi.Tests
             var path = "http://localhost" + (String.IsNullOrWhiteSpace(callbackName) ? null : "?callback=" + callbackName);
             this._request = new HttpRequestMessage(new HttpMethod("GET"), path);
 
-            var settings = Substitute.For<IWebApiCacheConfigurationSettingsProvider>();
-
-            this._helper = new WebApiCacheHelper(settings);
+            this._helper = new WebApiCacheHelper(this._settings);
 
             string callback;
             this._helper.IsJsonpRequest(this._request, out callback).Should().Be(expected);

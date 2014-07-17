@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net;
 
 namespace Aliencube.AlienCache.WebApi.Interfaces
@@ -6,7 +7,7 @@ namespace Aliencube.AlienCache.WebApi.Interfaces
     /// <summary>
     /// This provides interfaces to the CacheConfigurationSettingsProvider class.
     /// </summary>
-    public interface IWebApiCacheConfigurationSettingsProvider
+    public interface IWebApiCacheConfigurationSettingsProvider : IDisposable
     {
         /// <summary>
         /// Gets the duration in seconds, which determines cache to be alive.
